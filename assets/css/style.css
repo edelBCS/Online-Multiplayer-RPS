@@ -1,0 +1,32 @@
+#spriteDiv{
+    position: relative;
+    overflow: hidden;
+    width: 250px;
+    height: 250px;
+}
+
+.spriteImg{
+    top: -85px;
+    position: absolute;
+    height: 325%;
+}
+
+#paperImg{
+    left: -80px;
+}
+
+#rockImg{
+    left: -354px;
+}
+
+#scissorImg{
+    left: -628px;
+}
+
+#lizardImg{
+    left: -900px;
+}
+
+#spockImg{
+    left: -1173px;
+}
