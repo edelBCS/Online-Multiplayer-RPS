@@ -6,7 +6,7 @@ var connectedRef;
 var player1Choice;
 var player2Choice;
 
-var playerName = prompt("Name");
+sessionStorage.setItem("Name", prompt("Name"));
 
 //$(document).ready(function () {
 // Your web app's Firebase configuration
@@ -39,7 +39,6 @@ connectedRef.on("value", function (snap) {
 
     // If they are connected..
     if (snap.val()) {
-        console.log("snap val" + snap)
 
         // Add user to the connections list.
         var con = connectionsRef.push(true);
@@ -49,23 +48,24 @@ connectedRef.on("value", function (snap) {
     }
 });
 
-dbRef.set({players:{
-        player1: {
-            name: "",
-            status: "",
-            choice: ""
-        },
-        player2: {
-            name: "",
-            status: "",
-            choice: ""
-        }
-    }
-})
+// dbRef.set({players:{
+//         player1: {
+//             name: "",
+//             status: "",
+//             choice: ""
+//         },
+//         player2: {
+//             name: "",
+//             status: "",
+//             choice: ""
+//         }
+//     }
+// })
 
 // When first loaded or when the connections list changes...
 connectionsRef.on("value", function (snapshot) {
     
+    //console.log(playerName);
 
     // database.ref('/players').once('value').then(function(a){
     //     console.log(a.val())
@@ -84,20 +84,19 @@ connectionsRef.on("value", function (snapshot) {
         // })
         console.log(snapshot.numChildren())
         if (snapshot.numChildren() === 1){
-            database.ref('/players/player1/').update({name: playerName});
+            database.ref('/players/player1/').update({name: sessionStorage.getItem("Name")});
             sessionStorage.setItem("playerNo", "1");
         }
         else if (snapshot.numChildren() === 2){
-            database.ref('/players/player2/').update({name: playerName});
+            database.ref('/players/player2/').update({name: sessionStorage.getItem("Name")});
             sessionStorage.setItem("playerNo", "2");
         }
         else
             console.log("No Player slots available");
 
     //})
-    console.log(sessionStorage.getItem("playerNo"));
-    //(sessionStorage.getItem("playerNo") === "1")?database.ref("/players/player1").onDisconnect().update({name: ""}):"";
-    //(sessionStorage.getItem("playerNo") === "2")?database.ref("/players/player2").onDisconnect().update({name: ""}):"";
+    (sessionStorage.getItem("playerNo") === "1")?database.ref("/players/player1").onDisconnect().update({name: ""}):"";
+    (sessionStorage.getItem("playerNo") === "2")?database.ref("/players/player2").onDisconnect().update({name: ""}):"";
 
     // sessionStorage.setItem()
     // dbRef.set({
