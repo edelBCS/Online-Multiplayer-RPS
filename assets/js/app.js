@@ -6,7 +6,10 @@ var connectedRef;
 var player1Choice;
 var player2Choice;
 
-sessionStorage.setItem("Name", prompt("Name"));
+
+var currentPlayer = prompt("Name");
+sessionStorage.setItem("Name", currentPlayer);
+
 
 //$(document).ready(function () {
 // Your web app's Firebase configuration
@@ -64,47 +67,32 @@ connectedRef.on("value", function (snap) {
 
 // When first loaded or when the connections list changes...
 connectionsRef.on("value", function (snapshot) {
+
+    //checks if there are no more than 2 players
+    if(snapshot.numChildren() === 1 || snapshot.numChildren() === 2){
+        console.log("test")
+        var newUsersRef = database.ref().child("players").child(currentPlayer);
+        var setup = {choice: ""};
+        newUsersRef.set(setup);
+    } else {
+        console.log("No more player slots available!")
+    }
+
+    //removes player from database on disconnect
+    (sessionStorage.getItem("Name") === currentPlayer) ? database.ref("/players/" + currentPlayer).onDisconnect().remove(): "";
     
-    //console.log(playerName);
-
-    // database.ref('/players').once('value').then(function(a){
-    //     console.log(a.val())
-        // dbRef.update({players:{
-        //         player1: {
-        //             name: "",
-        //             status: "",
-        //             choice: ""
-        //         },
-        //         player2: {
-        //             name: "",
-        //             status: "",
-        //             choice: ""
-        //         }
-        //     }
-        // })
-        console.log(snapshot.numChildren())
-        if (snapshot.numChildren() === 1){
-            database.ref('/players/player1/').update({name: sessionStorage.getItem("Name")});
-            sessionStorage.setItem("playerNo", "1");
-        }
-        else if (snapshot.numChildren() === 2){
-            database.ref('/players/player2/').update({name: sessionStorage.getItem("Name")});
-            sessionStorage.setItem("playerNo", "2");
-        }
-        else
-            console.log("No Player slots available");
-
-    //})
-    (sessionStorage.getItem("playerNo") === "1")?database.ref("/players/player1").onDisconnect().update({name: ""}):"";
-    (sessionStorage.getItem("playerNo") === "2")?database.ref("/players/player2").onDisconnect().update({name: ""}):"";
-
-    // sessionStorage.setItem()
-    // dbRef.set({
-
-    // })
-    // Display the viewer count in the html.
-    // The number of online users is the number of children in the connections list.
+    //Displays number of players connected
     $("#chat").text(snapshot.numChildren());
+});
+
+$("button").on("click", function(){
+    database.ref("/players/" + currentPlayer).update({choice: $(this).attr("data-weapon")});
+});
+
+//when player makes a choice
+database.ref("/players").on("value", function(snap){
+    console.log(snap.key)
+    
 });
 
 function whoWon() {
@@ -141,23 +129,23 @@ function drawPlayerSelection(player, selection) {
             imgID = "lizardImg";
             break;
         case "spock":
-                imgID = "spockImg";
-                break;
+            imgID = "spockImg";
+            break;
     }
-    var spriteDiv = 
+    var spriteDiv =
         $("<div>")
-            .attr("id", "spriteDiv")
-            .addClass("rounded-top mx-auto")
-            .append($("<img>")
-                .attr("id", imgID)
-                .attr("src", "assets/images/rpsls-sprite.png")
-                .attr("alt", "sprite-image")
-                .addClass("spriteImg")
-            );
+        .attr("id", "spriteDiv")
+        .addClass("rounded-top mx-auto")
+        .append($("<img>")
+            .attr("id", imgID)
+            .attr("src", "assets/images/rpsls-sprite.png")
+            .attr("alt", "sprite-image")
+            .addClass("spriteImg")
+        );
 
     var spriteText = $("<h2>")
-            .addClass("spriteTag col-12 text-center mx-auto rounded-bottom")
-            .text(selection.toUpperCase());
+        .addClass("spriteTag col-12 text-center mx-auto rounded-bottom")
+        .text(selection.toUpperCase());
 
     $(`#${player}`).append(spriteDiv).append(spriteText);
 }
