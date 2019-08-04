@@ -3,12 +3,14 @@ var database;
 var dbRef;
 var connectionsRef;
 var connectedRef;
-var player1Choice;
-var player2Choice;
+var players;
+var playerChoice = "";
+var opponentChoice = "";
 
 
 var currentPlayer = prompt("Name");
 sessionStorage.setItem("Name", currentPlayer);
+$("#newGameBtnDiv").hide();
 
 
 //$(document).ready(function () {
@@ -51,20 +53,6 @@ connectedRef.on("value", function (snap) {
     }
 });
 
-// dbRef.set({players:{
-//         player1: {
-//             name: "",
-//             status: "",
-//             choice: ""
-//         },
-//         player2: {
-//             name: "",
-//             status: "",
-//             choice: ""
-//         }
-//     }
-// })
-
 // When first loaded or when the connections list changes...
 connectionsRef.on("value", function (snapshot) {
 
@@ -85,34 +73,62 @@ connectionsRef.on("value", function (snapshot) {
     $("#chat").text(snapshot.numChildren());
 });
 
-$("button").on("click", function(){
+$(".weapon-btn").on("click", function(){
     database.ref("/players/" + currentPlayer).update({choice: $(this).attr("data-weapon")});
 });
 
 //when player makes a choice
-database.ref("/players").on("value", function(snap){
-    console.log(snap.key)
-    
+database.ref("/players/").on("child_changed", function(snap){
+    console.log(snap.val())
+    if(snap.key === currentPlayer){
+        playerChoice = snap.val().choice;
+        drawPlayerSelection("playerDiv", playerChoice);
+        $("#buttonsDiv").hide();
+    }
+    else
+        opponentChoice = snap.val().choice;
+
+    if (playerChoice != "" && opponentChoice != ""){
+        drawPlayerSelection("opponentDiv", opponentChoice);
+        console.log(whoWon());
+        $("#newGameBtnDiv").show()
+    }
 });
 
-function whoWon() {
-    if (player1Choice === player1Choice)
-        return "tie";
-    else if (player1Choice === 'rock' && (player2Choice === ('paper' || 'spock')))
-        return "player2";
-    else if (player1Choice === 'paper' && (player2Choice === ('scissors' || 'lizard')))
-        return "player2";
-    else if (player1Choice === 'scissors' && (player2Choice === ('rock' || 'spock')))
-        return "player2";
-    else if (player1Choice === 'spock' && (player2Choice === ('paper' || 'lizard')))
-        return "player2";
-    else if (player1Choice === 'lizard' && (player2Choice === ('scissors' || 'rock')))
-        return "player2";
-    else
-        return "player1";
+$("#resetGameBtn").on("click", function(){
+    resetGame();
+});
+
+function resetGame(){
+    $("#newGameBtnDiv").hide()
+    $("#buttonsDiv").show();
+    playerChoice = "";
+    opponentChoice = "";
+    $("#playerDiv").empty();
+    $("#opponentDiv").empty();
+
 }
 
-function drawPlayerSelection(player, selection) {
+function whoWon() {
+    var fightNoun = "";
+
+    if (playerChoice === opponentChoice)
+        $("#fightInfo").text(`It's a Tie: ${playerChoice} vs ${opponentChoice}`);
+    else if (playerChoice === 'rock' && (opponentChoice === ('paper' || 'spock')))
+        return "loss";
+    else if (playerChoice === 'paper' && (opponentChoice === ('scissors' || 'lizard')))
+        return "loss";
+    else if (playerChoice === 'scissors' && (opponentChoice === ('rock' || 'spock')))
+        return "loss";
+    else if (playerChoice === 'spock' && (opponentChoice === ('paper' || 'lizard')))
+        return "loss";
+    else if (playerChoice === 'lizard' && (opponentChoice === ('scissors' || 'rock')))
+        return "loss";
+    else
+        return "Winner ";
+}
+
+function drawPlayerSelection(playerDiv, selection) {
     var imgID;
 
     switch (selection) {
@@ -147,5 +163,5 @@ function drawPlayerSelection(player, selection) {
         .addClass("spriteTag col-12 text-center mx-auto rounded-bottom")
         .text(selection.toUpperCase());
 
-    $(`#${player}`).append(spriteDiv).append(spriteText);
+    $(`#${playerDiv}`).append(spriteDiv).append(spriteText);
 }
