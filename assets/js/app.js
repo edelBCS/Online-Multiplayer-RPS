@@ -13,6 +13,7 @@ var losses = 0;
 var currentPlayer = "";
 
 $("#newGameBtnDiv").hide();
+$("#buttonsDiv").hide();
 
 getPlayerName();
 
@@ -70,35 +71,39 @@ connectionsRef.on("value", function (snapshot) {
     //     $("#buttonsDiv").hide();
     //     $("#fightInfo").text(`No player slot available...Sorry`)
     // } else {
-        //checks if there are no more than 2 players
-        if (snapshot.numChildren() === 1) {
-            var newUsersRef = database.ref().child("players").child(currentPlayer);
-            var setup = {
-                choice: "",
-                status: "waiting",
-                wins: 0,
-                losses: 0
-            };
-            newUsersRef.set(setup);
-            $("#playerScore").html(`${currentPlayer}<br><br>Wins: ${wins}<br>Losses: ${losses}`);
-            $("#opponentScore").html(`Waiting for Opponent...`);
-        } else if (snapshot.numChildren() === 2) {
-            var newUsersRef = database.ref().child("players").child(currentPlayer);
-            var setup = {
-                choice: "",
-                status: "playing",
-                wins: 0,
-                losses: 0
-            };
-            newUsersRef.set(setup);
-            $("#playerScore").html(`${currentPlayer}<br><br>Wins: ${wins}<br>Losses: ${losses}`);
-            $("#fightInfo").text(`Choose Your Weapon`);
-            $("#opponentScore").html(`Opponent<br><br>Wins: ${wins}<br>Losses: ${losses}`);
-        }
+    //checks if there are no more than 2 players
+    if (snapshot.numChildren() === 1) {
+        var newUsersRef = database.ref().child("players").child(currentPlayer);
+        var setup = {
+            choice: "",
+            status: "waiting",
+            wins: 0,
+            losses: 0
+        };
+        newUsersRef.set(setup);
+        $("#playerScore").html(`${currentPlayer}<br><br>Wins: ${wins}<br>Losses: ${losses}`);
+        $("#opponentScore").html(`Waiting for Opponent...`);
+    } else if (snapshot.numChildren() === 2) {
+        var newUsersRef = database.ref().child("players").child(currentPlayer);
+        var setup = {
+            choice: "",
+            status: "playing",
+            wins: 0,
+            losses: 0
+        };
+        newUsersRef.set(setup);
+        $("#playerScore").html(`${currentPlayer}<br><br>Wins: ${wins}<br>Losses: ${losses}`);
+        $("#fightInfo").text(`Choose Your Weapon`);
+        $("#opponentScore").html(`Opponent<br><br>Wins: ${wins}<br>Losses: ${losses}`);
+        $("#buttonsDiv").show();
+    }
     // }
 
     //removes player from database on disconnect
-    (sessionStorage.getItem("Name") === currentPlayer) ? database.ref("/players/" + currentPlayer).onDisconnect().remove(): "";
+    if (sessionStorage.getItem("Name") === currentPlayer) {
+        database.ref("/players/" + currentPlayer).onDisconnect().remove();
+        database.ref("/chat").onDisconnect().remove();
+    } 
 
     //Displays number of players connected
     //$("#chat").text(snapshot.numChildren());
@@ -297,3 +302,26 @@ function drawPlayerSelection(playerDiv, selection) {
 
     $(`#${playerDiv}`).append(spriteDiv).append(spriteText);
 }
+
+$("#chatSendBtn").on("click", e => {
+    e.preventDefault();
+
+    dbRef.child("chat").push($("#chatText").val());
+
+    $("#chatText").val("");
+
+    
+});
+
+database.ref("/chat").on("child_added", function(snap){
+    $(".commentList")
+        .append($("<li>")
+            .append($("<div>")
+                .addClass("commentText")
+                .append($("<p>").html(`<strong>${currentPlayer}:</strong> ${snap.val()}`))
+            )
+        );
+
+    $(".commentList").scrollTop($(".commentList").prop("scrollHeight"));
+
+});
