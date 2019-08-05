@@ -11,6 +11,7 @@ var opponentStatus = "";
 var wins = 0;
 var losses = 0;
 var currentPlayer = "";
+var gameStatus = "open";
 
 $("#newGameBtnDiv").hide();
 $("#buttonsDiv").hide();
@@ -67,66 +68,68 @@ async function getPlayerName() {
         return {noChilds: temp, oppkey: temp2};
     })
 
-    // var oppName = await database.ref("/player").once("value").then(function(snap){
-    //     return snap.val();
-    // });
     console.log(playerInfo)
     if (playerInfo.noChilds >= 2) {
+        database.goOffline();
         $("#fightInfo").text(`Too Many Players Connected...Try again later.`);
         $("#chat").hide();
         console.log("too many players")
-        database.goOffline();
+        
     } else {
         currentPlayer = prompt("Name");
+        sessionStorage.setItem("Name", currentPlayer);
         if (currentPlayer === null)
             location.replace("noname.html");
         else{
-            if(playerInfo.oppkey[currentPlayer] != null){
+            console.log("Player Info " + playerInfo.oppkey)
+            if(playerInfo.oppkey != null && playerInfo.oppkey[currentPlayer]){
                 alert("Player already has that name!");
                 getPlayerName();
             }else{
-                sessionStorage.setItem("Name", currentPlayer);
+                
             }            
         }
             
         return currentPlayer;
     }
-
-
-
 }
 
 // When first loaded or when the connections list changes...
 connectionsRef.on("value", function (snapshot) {
-
-    if (snapshot.numChildren() === 1) {
-        var newUsersRef = database.ref().child("players").child(currentPlayer);
-        var setup = {
-            choice: "",
-            status: "waiting",
-            wins: 0,
-            losses: 0
-        };
-        newUsersRef.set(setup);
-        $("#playerScore").html(`${currentPlayer}<br><br>Wins: ${wins}<br>Losses: ${losses}`);
-        $("#opponentScore").html(`Waiting for Opponent...`);
-    } else if (snapshot.numChildren() === 2) {
-        var newUsersRef = database.ref().child("/players").child(currentPlayer);
-        var setup = {
-            choice: "",
-            status: "playing",
-            wins: 0,
-            losses: 0
-        };
-        newUsersRef.set(setup);
-        $("#playerScore").html(`${currentPlayer}<br><br>Wins: ${wins}<br>Losses: ${losses}`);
-        $("#fightInfo").text(`Choose Your Weapon`);
-        $("#opponentScore").html(`Opponent<br><br>Wins: ${wins}<br>Losses: ${losses}`);
-        $("#buttonsDiv").show();
+    if(gameStatus === "open"){
+        if (snapshot.numChildren() === 1) {
+            var newUsersRef = database.ref().child("players").child(currentPlayer);
+            var setup = {
+                choice: "",
+                status: "waiting",
+                wins: 0,
+                losses: 0
+            };
+            newUsersRef.set(setup);
+            $("#playerScore").html(`${currentPlayer}<br><br>Wins: ${wins}<br>Losses: ${losses}`);
+            $("#opponentScore").html(`Waiting for Opponent...`);
+            $("#buttonsDiv").hide();
+        } else if (snapshot.numChildren() === 2) {
+            var newUsersRef = database.ref().child("/players").child(currentPlayer);
+            var setup = {
+                choice: "",
+                status: "playing",
+                wins: 0,
+                losses: 0
+            };
+            newUsersRef.set(setup);
+            $("#playerScore").html(`${currentPlayer}<br><br>Wins: ${wins}<br>Losses: ${losses}`);
+            $("#fightInfo").text(`Choose Your Weapon`);
+            $("#opponentScore").html(`Opponent<br><br>Wins: ${wins}<br>Losses: ${losses}`);
+            $("#buttonsDiv").show();
+            gameStatus = "full";
+        }
     }
 
     //removes player from database on disconnect
     if (sessionStorage.getItem("Name") === currentPlayer) {
+        if(snapshot.numChildren < 2)
+            gameStatus = "open";
         database.ref("/players/" + currentPlayer).onDisconnect().remove();
         database.ref("/chat").onDisconnect().remove();
     }
@@ -208,6 +211,8 @@ $("#resetGameBtn").on("click", function () {
         choice: "",
         status: "ready"
     });
+
+    $("#newGameBtnDiv").hide();
 });
 
 //resets DOM and var's for new game
