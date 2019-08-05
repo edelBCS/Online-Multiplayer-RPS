@@ -61,7 +61,10 @@ connectedRef.on("value", function (snap) {
 function getPlayerName() {
 
     currentPlayer = prompt("Name");
-    sessionStorage.setItem("Name", currentPlayer);
+    if(currentPlayer === null)
+        location.replace("noname.html");
+    else
+        sessionStorage.setItem("Name", currentPlayer);
 }
 
 // When first loaded or when the connections list changes...
@@ -106,17 +109,23 @@ $(".weapon-btn").on("click", function () {
     });
 });
 
-//when player makes a choice
+//When player chice is updated in DB
 database.ref("/players/").on("child_changed", function (snap) {
     console.log(snap.val())
+
+    //Check if they are in a game
     if (snap.val().status === "playing") {
+        //save players choice and draw to screen
         if (snap.key === currentPlayer && snap.val().choice != "") {
             playerChoice = snap.val().choice;
             drawPlayerSelection("playerDiv", playerChoice);
+            $("#fightInfo").text(`Waiting for Opponent Selection...`);
             $("#buttonsDiv").hide();
+        //otherwise save as opponent choice
         } else
             opponentChoice = snap.val().choice;
 
+        //if both players have chosen, check who wins
         if (playerChoice != "" && opponentChoice != "") {
             drawPlayerSelection("opponentDiv", opponentChoice);
 
@@ -132,6 +141,7 @@ database.ref("/players/").on("child_changed", function (snap) {
         }
     }
 
+    //check to see if both players are ready for a new game
     if (snap.val().status === "ready") {
         if (snap.key === currentPlayer) {
             $("#fightInfo").text("Waiting for Opponent");
@@ -150,6 +160,7 @@ database.ref("/players/").on("child_changed", function (snap) {
         }
     }
 
+    //when game is finished write scores to the DOM
     if (snap.val().status === "finished") {
         if (snap.key === currentPlayer) {
             $("#playerScore").html(`${currentPlayer}<br><br>Wins: ${snap.val().wins}<br>Losses: ${snap.val().losses}`)
@@ -161,6 +172,7 @@ database.ref("/players/").on("child_changed", function (snap) {
     }
 });
 
+//Sets player to ready when newGameBtn is clicked
 $("#resetGameBtn").on("click", function () {
     database.ref("/players/" + currentPlayer).update({
         choice: "",
@@ -168,6 +180,7 @@ $("#resetGameBtn").on("click", function () {
     });
 });
 
+//resets DOM and var's for new game
 function resetGame() {
     $("#newGameBtnDiv").hide()
     $("#buttonsDiv").show();
@@ -177,6 +190,7 @@ function resetGame() {
     $("#opponentDiv").empty();
 }
 
+//Check who won the game 
 function whoWon() {
     var fightNoun = "";
     var fightText = "";
@@ -243,6 +257,7 @@ function whoWon() {
 
     console.log(`Wins: ${wins}, Losses: ${losses}`);
 
+    //writes score to DB
     var temp = {
         wins: wins,
         losses: losses
@@ -250,11 +265,13 @@ function whoWon() {
     database.ref("/players/" + currentPlayer).update(temp);
 
     $("#fightInfo").text(fightText);
-    //database.ref("/players/" + currentPlayer).update({status: "finished"});
+    
     $("#newGameBtnDiv").show()
+
     return fightText;
 }
 
+//draws DOM elements for player selection
 function drawPlayerSelection(playerDiv, selection) {
     var imgID;
 
@@ -275,6 +292,7 @@ function drawPlayerSelection(playerDiv, selection) {
             imgID = "spockImg";
             break;
     }
+
     var spriteDiv =
         $("<div>")
         .attr("id", "spriteDiv")
@@ -293,6 +311,7 @@ function drawPlayerSelection(playerDiv, selection) {
     $(`#${playerDiv}`).append(spriteDiv).append(spriteText);
 }
 
+//pushes chat text to DB
 $("#chatSendBtn").on("click", e => {
     e.preventDefault();
 
@@ -303,6 +322,7 @@ $("#chatSendBtn").on("click", e => {
     
 });
 
+//Adds chat text to DOM
 database.ref("/chat").on("child_added", function(snap){
     $(".commentList")
         .append($("<li>")
@@ -316,6 +336,7 @@ database.ref("/chat").on("child_added", function(snap){
 
 });
 
+//Removes all connections from players
 $("#kickOffBtn").on("click", e => {
     connectionsRef.set({});
 });
