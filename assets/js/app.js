@@ -15,7 +15,7 @@ var currentPlayer = "";
 $("#newGameBtnDiv").hide();
 $("#buttonsDiv").hide();
 
-getPlayerName();
+
 
 
 
@@ -34,6 +34,8 @@ firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 database = firebase.database();
 dbRef = database.ref();
+
+getPlayerName();
 
 // connectionsRef references a specific location in our database.
 // All of our connections will be stored in this directory.
@@ -58,13 +60,28 @@ connectedRef.on("value", function (snap) {
     }
 });
 
-function getPlayerName() {
+async function getPlayerName() {
+    var num = await database.ref("/players").once("value").then(function (snap) {
+        var temp =  snap.numChildren();
+        return temp;
+    })
+    console.log(num)
+    if (num >= 2) {
+        $("#fightInfo").text(`Too Many Players Connected...Try again later.`);
+        $("#chat").hide();
+        console.log("too many players")
+        database.goOffline();
+    } else {
+        currentPlayer = prompt("Name");
+        if (currentPlayer === null)
+            location.replace("noname.html");
+        else
+            sessionStorage.setItem("Name", currentPlayer);
+        return currentPlayer;
+    }
 
-    currentPlayer = prompt("Name");
-    if(currentPlayer === null)
-        location.replace("noname.html");
-    else
-        sessionStorage.setItem("Name", currentPlayer);
+
+
 }
 
 // When first loaded or when the connections list changes...
@@ -82,7 +99,7 @@ connectionsRef.on("value", function (snapshot) {
         $("#playerScore").html(`${currentPlayer}<br><br>Wins: ${wins}<br>Losses: ${losses}`);
         $("#opponentScore").html(`Waiting for Opponent...`);
     } else if (snapshot.numChildren() === 2) {
-        var newUsersRef = database.ref().child("players").child(currentPlayer);
+        var newUsersRef = database.ref().child("/players").child(currentPlayer);
         var setup = {
             choice: "",
             status: "playing",
@@ -95,11 +112,12 @@ connectionsRef.on("value", function (snapshot) {
         $("#opponentScore").html(`Opponent<br><br>Wins: ${wins}<br>Losses: ${losses}`);
         $("#buttonsDiv").show();
     }
+
     //removes player from database on disconnect
     if (sessionStorage.getItem("Name") === currentPlayer) {
         database.ref("/players/" + currentPlayer).onDisconnect().remove();
         database.ref("/chat").onDisconnect().remove();
-    } 
+    }
 });
 
 //when player selects their choice it updates the db
@@ -121,7 +139,7 @@ database.ref("/players/").on("child_changed", function (snap) {
             drawPlayerSelection("playerDiv", playerChoice);
             $("#fightInfo").text(`Waiting for Opponent Selection...`);
             $("#buttonsDiv").hide();
-        //otherwise save as opponent choice
+            //otherwise save as opponent choice
         } else
             opponentChoice = snap.val().choice;
 
@@ -265,7 +283,7 @@ function whoWon() {
     database.ref("/players/" + currentPlayer).update(temp);
 
     $("#fightInfo").text(fightText);
-    
+
     $("#newGameBtnDiv").show()
 
     return fightText;
@@ -319,11 +337,11 @@ $("#chatSendBtn").on("click", e => {
 
     $("#chatText").val("");
 
-    
+
 });
 
 //Adds chat text to DOM
-database.ref("/chat").on("child_added", function(snap){
+database.ref("/chat").on("child_added", function (snap) {
     $(".commentList")
         .append($("<li>")
             .append($("<div>")
@@ -336,7 +354,7 @@ database.ref("/chat").on("child_added", function(snap){
 
 });
 
-//Removes all connections from players
-$("#kickOffBtn").on("click", e => {
-    connectionsRef.set({});
-});
+// //Removes all connections from players
+// $("#kickOffBtn").on("click", e => {
+//     connectionsRef.set({});
+// });
