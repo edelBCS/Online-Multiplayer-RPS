@@ -61,12 +61,17 @@ connectedRef.on("value", function (snap) {
 });
 
 async function getPlayerName() {
-    var num = await database.ref("/players").once("value").then(function (snap) {
+    var playerInfo = await database.ref("/players").once("value").then(function (snap) {
         var temp =  snap.numChildren();
-        return temp;
+        var temp2 = snap.val();
+        return {noChilds: temp, oppkey: temp2};
     })
-    console.log(num)
-    if (num >= 2) {
+
+    // var oppName = await database.ref("/player").once("value").then(function(snap){
+    //     return snap.val();
+    // });
+    console.log(playerInfo)
+    if (playerInfo.noChilds >= 2) {
         $("#fightInfo").text(`Too Many Players Connected...Try again later.`);
         $("#chat").hide();
         console.log("too many players")
@@ -75,8 +80,15 @@ async function getPlayerName() {
         currentPlayer = prompt("Name");
         if (currentPlayer === null)
             location.replace("noname.html");
-        else
-            sessionStorage.setItem("Name", currentPlayer);
+        else{
+            if(playerInfo.oppkey[currentPlayer] != null){
+                alert("Player already has that name!");
+                getPlayerName();
+            }else{
+                sessionStorage.setItem("Name", currentPlayer);
+            }            
+        }
+            
         return currentPlayer;
     }
 
