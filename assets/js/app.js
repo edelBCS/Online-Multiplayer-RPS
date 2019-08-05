@@ -46,7 +46,7 @@ connectedRef = database.ref(".info/connected");
 
 // When the client's connection state changes...
 connectedRef.on("value", function (snap) {
-
+    console.log(snap.val())
     // If they are connected..
     if (snap.val()) {
 
@@ -66,12 +66,7 @@ function getPlayerName() {
 
 // When first loaded or when the connections list changes...
 connectionsRef.on("value", function (snapshot) {
-    // if (snapshot.numChildren() > 2) {
-    //     $("#newGameBtnDiv").hide();
-    //     $("#buttonsDiv").hide();
-    //     $("#fightInfo").text(`No player slot available...Sorry`)
-    // } else {
-    //checks if there are no more than 2 players
+
     if (snapshot.numChildren() === 1) {
         var newUsersRef = database.ref().child("players").child(currentPlayer);
         var setup = {
@@ -97,16 +92,11 @@ connectionsRef.on("value", function (snapshot) {
         $("#opponentScore").html(`Opponent<br><br>Wins: ${wins}<br>Losses: ${losses}`);
         $("#buttonsDiv").show();
     }
-    // }
-
     //removes player from database on disconnect
     if (sessionStorage.getItem("Name") === currentPlayer) {
         database.ref("/players/" + currentPlayer).onDisconnect().remove();
         database.ref("/chat").onDisconnect().remove();
     } 
-
-    //Displays number of players connected
-    //$("#chat").text(snapshot.numChildren());
 });
 
 //when player selects their choice it updates the db
@@ -306,7 +296,7 @@ function drawPlayerSelection(playerDiv, selection) {
 $("#chatSendBtn").on("click", e => {
     e.preventDefault();
 
-    dbRef.child("chat").push($("#chatText").val());
+    dbRef.child("chat").push("<strong>" + currentPlayer + ":</strong> " + $("#chatText").val());
 
     $("#chatText").val("");
 
@@ -318,10 +308,14 @@ database.ref("/chat").on("child_added", function(snap){
         .append($("<li>")
             .append($("<div>")
                 .addClass("commentText")
-                .append($("<p>").html(`<strong>${currentPlayer}:</strong> ${snap.val()}`))
+                .append($("<p>").html(snap.val()))
             )
         );
 
     $(".commentList").scrollTop($(".commentList").prop("scrollHeight"));
 
+});
+
+$("#kickOffBtn").on("click", e => {
+    connectionsRef.set({});
 });
