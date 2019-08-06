@@ -17,10 +17,6 @@ $("#newGameBtnDiv").hide();
 $("#buttonsDiv").hide();
 
 
-
-
-
-
 //Firebase configuration
 firebaseConfig = {
     apiKey: "AIzaSyACzAWnyG_pLE7-4l0939rWUvevQMC2ZHc",
@@ -124,15 +120,32 @@ connectionsRef.on("value", function (snapshot) {
             $("#buttonsDiv").show();
             gameStatus = "full";
         }
+    }else if(gameStatus === "full" && snapshot.numChildren() === 1){
+        gameStatus = "open";
+        var newUsersRef = database.ref().child("players").child(currentPlayer);
+            var setup = {
+                choice: "",
+                status: "waiting",
+                wins: 0,
+                losses: 0
+            };
+            newUsersRef.set(setup);
+            $("#playerScore").html(`${currentPlayer}<br><br>Wins: ${wins}<br>Losses: ${losses}`);
+            $("#opponentScore").html(`Waiting for Opponent...`);
+            $("#fightInfo").text(`Opponent Disconnected`);
+            $("#buttonsDiv").hide();
+            $("#newGameBtnDiv").hide();
+            $("#playerDiv").empty();
+            $("#opponentDiv").empty();
+            wins = 0;
+            losses = 0;
     }
 
     //removes player from database on disconnect
-    if (sessionStorage.getItem("Name") === currentPlayer) {
-        if(snapshot.numChildren < 2)
-            gameStatus = "open";
-        database.ref("/players/" + currentPlayer).onDisconnect().remove();
-        database.ref("/chat").onDisconnect().remove();
-    }
+    database.ref("/players/" + currentPlayer).onDisconnect().remove();
+    database.ref("/chat").onDisconnect().remove();
+
+    console.log(gameStatus)
 });
 
 //when player selects their choice it updates the db
