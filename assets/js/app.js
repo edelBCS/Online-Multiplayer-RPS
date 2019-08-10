@@ -362,8 +362,8 @@ function drawPlayerSelection(playerDiv, selection) {
 //pushes chat text to DB
 $("#chatSendBtn").on("click", e => {
     e.preventDefault();
-
-    dbRef.child("chat").push("<strong>" + currentPlayer + ":</strong> " + $("#chatText").val());
+    var date = moment().format('MM/DD/YY-h:mm:ss a')
+    dbRef.child("chat").push("<strong>" + currentPlayer + "(" + date + "):</strong> " + $("#chatText").val());
 
     $("#chatText").val("");
 
