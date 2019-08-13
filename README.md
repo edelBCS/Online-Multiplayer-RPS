@@ -1,10 +1,10 @@
-# rps-multiplayer
+# Online Multiplayer RPS
 This is an online multiplayer Rock-Paper-Scissors(Lizard-Spock) game.
 
 ## Features
-* 2-player battle online
+* 2-player online battle
 * Online Chat
-* Realtime Gameplay
+* Realtime Gameplay, Score Keeping, Player Tracking
 
 ## RULES
 
